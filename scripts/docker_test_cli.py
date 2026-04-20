@@ -45,12 +45,20 @@ async def main():
     }
     exporter = exporters[args.format]
 
+    # Map CLI format to OutputFormat enum values
+    format_map = {
+        "markdown": OutputFormat.MARKDOWN,
+        "html": OutputFormat.HTML,
+        "text": OutputFormat.TEXT,
+        "pdf": OutputFormat.PDF
+    }
+
     async def process_job(job: CrawlJob):
         logger.info(f"Worker processing job {job.id} for {job.url}")
         if args.ignore_robots:
             job.respect_robots = False
         
-        job.output_format = args.format
+        job.output_format = format_map[args.format]
             
         result = await engine.execute(job)
         if result.success:
