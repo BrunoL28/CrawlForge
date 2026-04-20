@@ -77,6 +77,9 @@ class CrawlJob(BaseModel):
     remove_scripts: bool = True
     remove_styles: bool = True
 
+    # ── Robots ───────────────────────────────────────
+    respect_robots: bool = True
+
     # ── Lifecycle metadata (set by the system) ───────
     status: JobStatus = JobStatus.PENDING
     attempts: int = 0
@@ -149,6 +152,7 @@ class CrawlRequest(BaseModel):
     proxy_provider: str | None = None
     remove_scripts: bool = True
     remove_styles: bool = True
+    respect_robots: bool = True
 
 
 class CrawlResponse(BaseModel):

@@ -17,6 +17,7 @@ async def main():
     parser.add_argument("--urls", type=int, default=3, help="Number of test URLs to crawl (for multi-worker test)")
     parser.add_argument("--strategy", type=str, choices=["full", "deep"], default="full", help="Extraction strategy")
     parser.add_argument("--url", type=str, help="Specific URL for deep crawl")
+    parser.add_argument("--ignore-robots", action="store_true", help="Ignore robots.txt rules")
     
     args = parser.parse_args()
 
@@ -32,6 +33,9 @@ async def main():
 
     async def process_job(job: CrawlJob):
         logger.info(f"Worker processing job {job.id} for {job.url}")
+        if args.ignore_robots:
+            job.respect_robots = False
+            
         result = await engine.execute(job)
         if result.success:
             path = await exporter.export(result.content, job)
