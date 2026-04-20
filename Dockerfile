@@ -64,13 +64,16 @@ WORKDIR /app
 
 # Copy virtual environment from builder
 COPY --from=builder /app/.venv /app/.venv
+
+# Install Playwright browsers to /app/.playwright (PLAYWRIGHT_BROWSERS_PATH)
+# while still root. This layer will only rebuild if dependencies change.
+RUN /app/.venv/bin/python -m playwright install --with-deps chromium
+
+# Copy source and scripts (these change often)
 COPY --from=builder /app/crawlforge /app/crawlforge
 COPY scripts/ scripts/
 
-# Install Playwright browsers to /app/.playwright (PLAYWRIGHT_BROWSERS_PATH)
-# while still root, then hand ownership of everything to the app user.
-RUN /app/.venv/bin/python -m playwright install chromium && \
-    mkdir -p /app/logs /app/output && \
+RUN mkdir -p /app/logs /app/output && \
     chown -R crawlforge:crawlforge /app
 
 USER crawlforge
