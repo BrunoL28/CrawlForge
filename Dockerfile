@@ -46,14 +46,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     # looks in /home/crawlforge/.cache — different paths, browser not found.
     PLAYWRIGHT_BROWSERS_PATH="/app/.playwright"
 
-# Install playwright system dependencies
+# Install playwright + WeasyPrint system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 \
     libcups2 libdrm2 libdbus-1-3 libxkbcommon0 \
     libatspi2.0-0 libxcomposite1 libxdamage1 libxfixes3 \
     libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2 \
-    libwayland-client0 && \
+    libwayland-client0 \
+    libharfbuzz0b libpangoft2-1.0-0 libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 shared-mime-info && \
     rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
