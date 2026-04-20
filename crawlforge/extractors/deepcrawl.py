@@ -40,11 +40,13 @@ class DeepCrawlExtractor:
         max_pages: int = 50,
         respect_robots: bool = True,
         delay_between_pages: float = 0.5,
+        user_agent: str = "CrawlForge",
     ) -> None:
         self._max_depth = min(max_depth, 5)
         self._max_pages = max_pages
         self._respect_robots = respect_robots
         self._delay = delay_between_pages
+        self._user_agent = user_agent
         self._robot_parser: RobotFileParser | None = None
 
     @property
@@ -92,7 +94,7 @@ class DeepCrawlExtractor:
         """Check if URL is allowed by robots.txt."""
         if self._robot_parser is None:
             return True
-        return self._robot_parser.can_fetch("*", url)
+        return self._robot_parser.can_fetch(self._user_agent, url)
 
     def _is_internal(self, url: str, root_domain: str) -> bool:
         """Check if URL belongs to the same domain as root."""
@@ -156,7 +158,13 @@ class DeepCrawlExtractor:
                 if depth > self._max_depth:
                     continue
                 if not self._is_allowed(current_url):
-                    logger.debug("Blocked by robots.txt: {}", current_url)
+                    logger.warning("Blocked by robots.txt: {}", current_url)
+                    pages.append(DeepCrawlPage(
+                        url=current_url,
+                        depth=depth,
+                        success=False,
+                        error_message=f"Blocked by robots.txt (User-Agent: {self._user_agent})",
+                    ))
                     continue
 
                 visited.add(current_url)

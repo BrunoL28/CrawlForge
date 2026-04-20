@@ -70,6 +70,9 @@ class Settings(BaseSettings):
     session_pool_size: int = 10
     session_ttl_seconds: int = 3600  # 1 hour
 
+    # ── Extraction ───────────────────────────────────
+    robot_user_agent: str = "CrawlForge/0.1.0"
+
 
 
     # ── Derived helpers ──────────────────────────────

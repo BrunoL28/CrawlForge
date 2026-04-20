@@ -290,6 +290,7 @@ class CrawlerEngine:
             max_pages=50,
             respect_robots=True,
             delay_between_pages=0.5,
+            user_agent=self._settings.robot_user_agent,
         )
 
         def session_factory():
