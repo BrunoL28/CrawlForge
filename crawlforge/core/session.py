@@ -127,11 +127,10 @@ class SessionHandler:
         from urllib.parse import urlparse
         domain = urlparse(url).netloc
         if self.domain == "default" and domain:
-             # Logic to move session between domain pools if needed, 
-             # but for now we'll just stick to whatever started.
+             # Logic to move session between domain pools if needed
              pass
 
-        return await self.current_session.crawler.crawl(url, **kwargs)
+        return await self.current_session.crawler.arun(url, **kwargs)
 
     @classmethod
     async def _cleanup_loop(cls) -> None:

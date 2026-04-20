@@ -1,0 +1,20 @@
+# ═══════════════════════════════════════════════════════
+# CrawlForge — Phase 3 Demo (Multi-worker Test)
+# ═══════════════════════════════════════════════════════
+
+services:
+  demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: crawlforge-demo
+    volumes:
+      - ./output:/app/output
+      - ./scripts:/app/scripts:ro
+    environment:
+      - APP_ENV=test
+      - DEBUG=true
+      # We skip Redis/DB for the in-memory queue demo
+    command: python3 scripts/phase3_demo.py
+    restart: "no"
