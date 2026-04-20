@@ -18,6 +18,7 @@ async def main():
     parser.add_argument("--strategy", type=str, choices=["full", "deep"], default="full", help="Extraction strategy")
     parser.add_argument("--url", type=str, help="Specific URL for deep crawl")
     parser.add_argument("--ignore-robots", action="store_true", help="Ignore robots.txt rules")
+    parser.add_argument("--format", type=str, choices=["markdown", "html", "text", "pdf"], default="markdown", help="Output format")
     
     args = parser.parse_args()
 
@@ -29,17 +30,57 @@ async def main():
 
     await SessionHandler.global_start(settings)
     engine = CrawlerEngine(settings)
-    exporter = MarkdownExporter()
+    
+    # Select exporter
+    from crawlforge.exporters.markdown import MarkdownExporter
+    from crawlforge.exporters.html import HtmlExporter
+    from crawlforge.exporters.text import TextExporter
+    from crawlforge.exporters.pdf import PdfExporter
+
+    exporters = {
+        "markdown": MarkdownExporter(),
+        "html": HtmlExporter(),
+        "text": TextExporter(),
+        "pdf": PdfExporter(),
+    }
+    exporter = exporters[args.format]
 
     async def process_job(job: CrawlJob):
         logger.info(f"Worker processing job {job.id} for {job.url}")
         if args.ignore_robots:
             job.respect_robots = False
+        
+        job.output_format = args.format
             
         result = await engine.execute(job)
         if result.success:
-            path = await exporter.export(result.content, job)
-            logger.info(f"✅ Success! Saved to {path}")
+            if job.strategy == ExtractionStrategy.DEEP_CRAWL:
+                import json
+                from pathlib import Path
+                # For deep crawl, we save the JSON summary AND individual pages
+                # The 'content' returns a JSON string of the whole result
+                summary_data = json.loads(result.content)
+                
+                # Save individual pages if markdown
+                if args.format == "markdown":
+                    base_path = Path("output") / f"deepcrawl_{job.id}"
+                    base_path.mkdir(parents=True, exist_ok=True)
+                    
+                    for i, page in enumerate(summary_data.get("pages", [])):
+                        # Create a safe filename
+                        page_url = page.get("url", f"page_{i}")
+                        safe_name = page_url.split("//")[-1].replace("/", "_")[:100] + ".md"
+                        file_path = base_path / safe_name
+                        with open(file_path, "w", encoding="utf-8") as f:
+                            f.write(page.get("content", ""))
+                    logger.info(f"✅ DeepCrawl pages saved to {base_path}/")
+                
+                # Still save the summary JSON
+                path = await exporter.export(result.content, job)
+                logger.info(f"✅ Summary saved to {path}")
+            else:
+                path = await exporter.export(result.content, job)
+                logger.info(f"✅ Success! Saved to {path}")
         else:
             logger.error(f"❌ Failed: {result.error_message}")
 
