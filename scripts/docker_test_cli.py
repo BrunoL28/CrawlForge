@@ -19,6 +19,7 @@ async def main():
     parser.add_argument("--url", type=str, help="Specific URL for deep crawl")
     parser.add_argument("--ignore-robots", action="store_true", help="Ignore robots.txt rules")
     parser.add_argument("--format", type=str, choices=["markdown", "html", "text", "pdf"], default="markdown", help="Output format")
+    parser.add_argument("--depth", type=int, default=1, help="Max depth for deep crawl")
     
     args = parser.parse_args()
 
@@ -109,8 +110,8 @@ async def main():
         logger.info(f"Starting DEEP CRAWL on {args.url}...")
         job_config = {
             "strategy": ExtractionStrategy.DEEP_CRAWL,
-            "output_format": OutputFormat.MARKDOWN,
-            "depth": 1
+            "output_format": format_map[args.format],
+            "depth": args.depth
         }
         await queue_manager.add_batch([args.url], job_config)
     else:
