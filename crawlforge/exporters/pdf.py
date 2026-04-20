@@ -39,20 +39,22 @@ class PdfExporter(BaseExporter):
         # Minimal HTML wrap if it doesn't look like HTML
         html_content = content
         if not content.strip().lower().startswith("<!doctype") and not content.strip().lower().startswith("<html"):
+            import html
+            safe_content = html.escape(content).replace("\n", "<br>")
             html_content = f"""
             <html>
             <head>
                 <style>
-                    body {{ font-family: serif; margin: 2cm; line-height: 1.5; }}
+                    body {{ font-family: sans-serif; margin: 2cm; line-height: 1.5; font-size: 11pt; }}
                     header {{ border-bottom: 1px solid #ccc; margin-bottom: 1cm; padding-bottom: 0.5cm; font-size: 10pt; color: #666; }}
-                    h1 {{ color: #2c3e50; }}
+                    .content {{ white-space: pre-wrap; font-family: monospace; background: #f8f9fa; padding: 1em; border-radius: 4px; }}
                 </style>
             </head>
             <body>
                 <header>
                     Source: {job.url} | Exported: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}
                 </header>
-                {content}
+                <div class="content">{safe_content}</div>
             </body>
             </html>
             """
