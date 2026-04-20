@@ -79,6 +79,7 @@ class CrawlJob(BaseModel):
 
     # ── Robots ───────────────────────────────────────
     respect_robots: bool = True
+    max_pages: int = Field(default=50, ge=1, le=500)
 
     # ── Lifecycle metadata (set by the system) ───────
     status: JobStatus = JobStatus.PENDING
@@ -153,6 +154,7 @@ class CrawlRequest(BaseModel):
     remove_scripts: bool = True
     remove_styles: bool = True
     respect_robots: bool = True
+    max_pages: int = 50
 
 
 class CrawlResponse(BaseModel):
