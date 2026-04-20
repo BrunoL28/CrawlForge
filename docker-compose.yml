@@ -1,0 +1,78 @@
+# ═══════════════════════════════════════════════════════
+# CrawlForge — Docker Compose (Development)
+# Hot reload, debug ports, local Supabase + Redis
+# ═══════════════════════════════════════════════════════
+
+services:
+  # ── FastAPI App (hot reload) ─────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: crawlforge-app
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - ./crawlforge:/app/crawlforge:ro    # Hot reload source
+      - ./logs:/app/logs                    # Persist logs locally
+      - ./output:/app/output               # Persist exported files
+    env_file: .env
+    environment:
+      - APP_ENV=development
+      - DEBUG=true
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/crawlforge
+      # /tmp is always writable by the non-root user — avoids PermissionError
+      # on host-mounted ./logs volume that may be owned by root
+      - LOG_DIR=/tmp/crawlforge_logs
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    # Override CMD for dev reload via uvicorn --reload
+    command: >
+      python -m uvicorn crawlforge.api.app:create_app
+      --factory --host 0.0.0.0 --port 8000 --reload
+      --reload-dir /app/crawlforge
+    restart: unless-stopped
+
+  # ── Redis (queue + embedding cache) ──────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: crawlforge-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # ── PostgreSQL + pgvector (Supabase-compatible) ──────
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: crawlforge-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: crawlforge
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  postgres-data:
