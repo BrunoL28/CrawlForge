@@ -151,3 +151,21 @@ class SessionHandler:
                 break
             except Exception:
                 logger.exception("Error in session cleanup loop")
+    @classmethod
+    async def global_cleanup(cls) -> None:
+        """Stops cleanup task and closes all active crawlers in the pool."""
+        if cls._cleanup_task:
+            cls._cleanup_task.cancel()
+            try:
+                await cls._cleanup_task
+            except asyncio.CancelledError:
+                pass
+            cls._cleanup_task = None
+
+        for domain, pool in cls._pool.items():
+            for s in pool:
+                if s.crawler:
+                    await s.crawler.close()
+        cls._pool.clear()
+        cls._started = False
+        logger.info("SessionPool cleaned up and stopped.")
