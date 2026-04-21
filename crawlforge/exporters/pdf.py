@@ -67,7 +67,10 @@ class PdfExporter(BaseExporter):
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(
             None,
-            lambda: HTML(string=html_content).write_pdf(target=str(output_path))
+            lambda: HTML(string=html_content).write_pdf(
+                target=str(output_path),
+                full_fonts=True  # Bypasses font subsetting bug for modern unicode ranges
+            )
         )
 
         return output_path
